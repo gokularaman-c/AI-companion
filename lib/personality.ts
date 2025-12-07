@@ -1,8 +1,5 @@
 // lib/personality.ts
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import type { UserMemory } from "./memory";
-
 export type PersonalityId =
   | "neutral"
   | "calm_mentor"
@@ -18,12 +15,8 @@ export const PERSONALITY_LABELS: Record<PersonalityId, string> = {
 
 export function applyPersonalityTone(
   baseReply: string,
-  personality: PersonalityId,
-  memory?: UserMemory
+  personality: PersonalityId
 ): string {
-  // 👇 This line silences ESLint, but does nothing at runtime
-  if (false && memory) console.log(memory);
-
   switch (personality) {
     case "calm_mentor":
       return `👨‍🏫 (Calm mentor tone) ${baseReply}`;
