@@ -1,62 +1,79 @@
-import { getDeveloperPrompt, MODEL } from "@/config/constants";
-import { getTools } from "@/lib/tools/tools";
+// app/api/turn_response/route.ts
+
+import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import { MODEL, getDeveloperPrompt } from "@/config/constants";
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const { messages, toolsState } = await request.json();
+    const body = await req.json();
+    const rawMessages = body.messages || [];
 
-    const tools = await getTools(toolsState);
+    console.log("Received raw messages for /api/turn_response:", rawMessages);
 
-    console.log("Tools:", tools);
+    // 🔁 1) Normalize messages from Responses-format → chat.completions format
+    const chatMessages = (rawMessages as any[]).map((m) => {
+      // Default role
+      let role: "user" | "assistant" | "system" = "user";
+      if (m.role === "assistant" || m.role === "system") {
+        role = m.role;
+      }
 
-    console.log("Received messages:", messages);
+      // Flatten content to a plain string
+      let content = "";
 
+      if (Array.isArray(m.content)) {
+        // Responses API usually sends: [{ type: "input_text", text: "..." }, ...]
+        content = m.content
+          .map((part: any) => {
+            if (typeof part === "string") return part;
+            if (part?.type === "input_text") return part.text ?? "";
+            if (part?.type === "output_text") return part.text ?? "";
+            if (part?.type === "text") return part.text ?? "";
+            return "";
+          })
+          .join("\n");
+      } else if (typeof m.content === "string") {
+        content = m.content;
+      } else if (m.content && typeof m.content === "object" && "text" in m.content) {
+        content = (m.content as any).text ?? "";
+      } else if (m.content != null) {
+        content = String(m.content);
+      }
+
+      return { role, content };
+    });
+
+    // 🔁 2) Call OpenRouter via chat.completions
     const openai = new OpenAI();
 
-    const events = await openai.responses.create({
+    const completion = await openai.chat.completions.create({
       model: MODEL,
-      input: messages,
-      instructions: getDeveloperPrompt(),
-      tools,
-      stream: true,
-      parallel_tool_calls: false,
+      messages: [
+        { role: "system", content: getDeveloperPrompt() },
+        ...chatMessages,
+      ],
     });
 
-    // Create a ReadableStream that emits SSE data
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const event of events) {
-            // Sending all events to the client
-            const data = JSON.stringify({
-              event: event.type,
-              data: event,
-            });
-            controller.enqueue(`data: ${data}\n\n`);
-          }
-          // End of stream
-          controller.close();
-        } catch (error) {
-          console.error("Error in streaming loop:", error);
-          controller.error(error);
-        }
-      },
-    });
+    const reply = completion.choices[0]?.message?.content ?? "";
 
-    // Return the ReadableStream as SSE
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-      },
-    });
-  } catch (error) {
-    console.error("Error in POST handler:", error);
-    return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : "Unknown error",
-      }),
+    // 🔁 3) Return updated messages in a simple format
+    const updatedMessages = [
+      ...chatMessages,
+      { role: "assistant", content: reply },
+    ];
+
+    return NextResponse.json({ messages: updatedMessages }, { status: 200 });
+  } catch (error: any) {
+    console.error(
+      "Error in POST /api/turn_response:",
+      error?.status,
+      error?.code,
+      error?.error || error
+    );
+
+    return NextResponse.json(
+      { error: "Failed to generate response" },
       { status: 500 }
     );
   }

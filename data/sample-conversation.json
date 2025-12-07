@@ -1,0 +1,40 @@
+[
+  { "role": "user", "content": "Hey, I’m Rahul. I’m in my final year of engineering and feeling super stressed lately." },
+  { "role": "assistant", "content": "Hi Rahul, thanks for sharing that with me. What’s been stressing you out the most?" },
+  { "role": "user", "content": "Mostly exams and placements. I love late-night studying but it’s ruining my sleep." },
+  { "role": "user", "content": "I usually listen to lo-fi music while studying, it calms me down a bit." },
+  { "role": "assistant", "content": "Lo-fi can be really relaxing. How many hours of sleep are you getting on average?" },
+  { "role": "user", "content": "Barely 5 hours. I know it’s bad but I feel more productive late at night." },
+  { "role": "user", "content": "Also, I really enjoy sci-fi movies and anime. That’s how I relax on weekends." },
+  { "role": "assistant", "content": "Nice, sci-fi and anime are great escapes. Do you usually watch alone or with friends?" },
+  { "role": "user", "content": "Mostly alone. I stay in a hostel away from family, so I don’t meet friends that often." },
+  { "role": "user", "content": "Sometimes I feel a bit lonely, to be honest. That’s why I like chatting like this." },
+  { "role": "assistant", "content": "I’m glad you feel comfortable talking here. What usually makes you feel better on tough days?" },
+  { "role": "user", "content": "Going for a late-night walk, listening to music, or just journaling my thoughts." },
+
+  { "role": "assistant", "content": "Do you enjoy journaling frequently?" },
+  { "role": "user", "content": "Yes, especially when I’m overwhelmed." },
+  { "role": "assistant", "content": "That sounds like a healthy coping mechanism." },
+
+  { "role": "user", "content": "Sometimes I sleep late because I lose track of time while studying." },
+  { "role": "assistant", "content": "Do late-night study sessions help you focus better?" },
+  { "role": "user", "content": "Yes, the campus is quiet and I feel more productive." },
+
+  { "role": "assistant", "content": "Do you ever nap during the day?" },
+  { "role": "user", "content": "Rarely. I usually just push through the day." },
+
+  { "role": "assistant", "content": "How often do you watch sci-fi or anime?" },
+  { "role": "user", "content": "Almost every weekend, it helps me relax." },
+
+  { "role": "assistant", "content": "Do you talk to your friends or family about stress?" },
+  { "role": "user", "content": "Not much, I don’t want to worry them." },
+
+  { "role": "assistant", "content": "How do you usually feel after journaling?" },
+  { "role": "user", "content": "Much lighter, like my thoughts are clearer." },
+
+  { "role": "assistant", "content": "Do you enjoy any hobbies apart from movies?" },
+  { "role": "user", "content": "I sometimes draw or doodle when I'm free." },
+
+  { "role": "assistant", "content": "That’s wonderful. Creative hobbies can be emotionally grounding." },
+  { "role": "user", "content": "True, but I don’t get a lot of time during exam season." }
+]

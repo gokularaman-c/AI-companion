@@ -1,4 +1,4 @@
-export const MODEL = "gpt-4.1";
+export const MODEL = "openai/gpt-oss-20b:free";
 
 // Developer prompt for the assistant
 export const DEVELOPER_PROMPT = `
