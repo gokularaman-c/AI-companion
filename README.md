@@ -1,155 +1,275 @@
-# Responses starter app
+# GuppShupp AI Companion 🧠💬
 
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-![NextJS](https://img.shields.io/badge/Built_with-NextJS-blue)
-![OpenAI API](https://img.shields.io/badge/Powered_by-OpenAI_API-orange)
+This project is an AI companion prototype built on top of the official
+**OpenAI Responses Starter App**.
 
-This repository contains a NextJS starter app built on top of the [Responses API](https://platform.openai.com/docs/api-reference/responses).
-It leverages built-in tools ([web search](https://platform.openai.com/docs/guides/tools-web-search?api-mode=responses) and [file search](https://platform.openai.com/docs/guides/tools-file-search)) and implements a chat interface with multi-turn conversation handling.
+On top of the original starter, it implements the **GuppShupp assignment requirements**:
 
-Features:
+* A **memory extraction module** that reads conversations and stores structured user memory
+* A **personality / tone system** that can answer in multiple styles using the same base reply
 
-- Multi-turn conversation handling
-- Streaming responses & tool calls
-- Function calling
-- Display annotations
-- Web search tool configuration
-- Vector store creation & file upload for use with the file search tool
-- MCP server configuration
-- Google Calendar & Gmail integration via first-party connector
+---
 
-This app is meant to be used as a starting point to build a conversational assistant that you can customize to your needs.
+## 1. What this app does
 
-## How to use
+### 1.1 Base Chat (home page `/`)
 
-1. **Set up the OpenAI API:**
+* A simple multi-turn chat interface
+* Uses **OpenAI Node SDK + OpenRouter**
+* No tools, vector search, Google OAuth, MCP or connectors are required for this assignment
+* The chat is implemented through a simple backend route using `chat.completions`
 
-   - If you're new to the OpenAI API, [sign up for an account](https://platform.openai.com/signup).
-   - Follow the [Quickstart](https://platform.openai.com/docs/quickstart) to retrieve your API key.
+---
 
-2. **Set the OpenAI API key:**
+### 1.2 Memory Extraction (`/api/memory/extract`)
 
-   2 options:
+This module:
 
-   - Set the `OPENAI_API_KEY` environment variable [globally in your system](https://platform.openai.com/docs/libraries#create-and-export-an-api-key)
-   - Set the `OPENAI_API_KEY` environment variable in the project: Create a `.env` file at the root of the project and add the following line (see `.env.example` for reference):
+* Accepts a conversation (array of `{ role, content }`)
+* Uses an LLM to infer **structured user memory**:
 
-   ```bash
-   OPENAI_API_KEY=<your_api_key>
-   ```
+  * Preferences
+  * Emotional patterns
+  * Stable factual info worth remembering
 
-3. **Clone the Repository:**
+The returned structure is:
 
-   ```bash
-   git clone https://github.com/openai/openai-responses-starter-app.git
-   ```
+```ts
+type MemoryItem = {
+  statement: string;
+  confidence: number;
+  evidenceMessageIndexes: number[];
+};
 
-4. **Install dependencies:**
+type UserMemory = {
+  preferences: MemoryItem[];
+  emotionalPatterns: MemoryItem[];
+  factsWorthRemembering: MemoryItem[];
+};
+```
 
-   Run in the project root:
+How it works:
 
-   ```bash
-   npm install
-   ```
+1. Reads the entire conversation
+2. Infers stable user traits or facts
+3. Produces structured JSON with confidence + evidence indices
 
-5. **Run the app:**
+#### 🔍 Test this endpoint:
 
-   ```bash
-   npm run dev
-   ```
+Open in browser:
 
-   The app will be available at [`http://localhost:3000`](http://localhost:3000).
+```
+http://localhost:3000/api/memory/extract
+```
 
-## Tools
+It automatically uses:
 
-This starter app shows how to use built-in tools, MCP servers, and first-party connectors with the Responses API.
+```
+data/sample-conversation.json
+```
 
-You can configure these tools directly from the UI, but some tools require additional setup (e.g. Google OAuth).
+to demonstrate extraction.
 
-### Built-in tools
+---
 
-We have several out-of-the-box tools available to use with the Responses API. This demo app implements and allows to configure directly from the UI the following tools:
+### 1.3 Memory + Personality Chat
 
-- File search, to allow the model to access your files in a vector store
-- Web search, to allow the model to search the web
-- Code interpreter, to allow the model to run Python code to solve problems
+(`POST /api/memory_chat`  +  `/memory-demo` UI page)
 
-Other built-in tools, such as computer use or image generation, are not implemented in this demo app.
+This is the **core assignment flow**:
 
-### MCP servers
+* User sends a message
+* Selects a personality style
+* Backend:
 
-The UI allows you to configure a public MCP server to use with the Responses API. If you want to use an MCP server that requires authentication, feel free to update `lib/tools/tools.ts` to add your own logic. You can use the Google connector integration as an example of how to use access tokens.
+  1. Runs memory extractor
+  2. Generates a neutral base reply using that memory
+  3. Rewrites reply according to a selected personality
 
-### Custom functions
+### ✨ Supported Personalities
 
-This demo app comes with example functions, `get_weather` and `get_joke`. You can add your own functions to the `config/functions.ts` file.
+* **neutral** – Neutral Assistant
+* **calm_mentor** – Calm Mentor
+* **witty_friend** – Witty Friend 😄
+* **therapist_style** – Therapist-style Listener 🧠
 
-### Google integration
+Each personality changes tone, language and emojis — while preserving the same base meaning.
 
-This app shows how you can use OpenAI's 1P connectors to integrate with Google and let the assistant read your calendar and email inbox. The app performs a secure OAuth flow in your browser, stores tokens per session, and attaches the Google connector to the Responses API tools list with your access token.
+### 🧪 Personality Demo Page
 
-To test this instructions, read the instructions below to set up the Google OAuth 2.0 client and enable the Google Calendar and Gmail APIs.
+Open in browser:
 
-Learn more about the available 1P connectors in [our documentation](https://platform.openai.com/docs/guides/tools-connectors-mcp#connectors).
+```
+http://localhost:3000/memory-demo
+```
 
-#### Setup (Google OAuth)
+You can:
 
-1. Create an OAuth 2.0 client for a Web application in your Google Cloud project (see [documentation](https://developers.google.com/identity/protocols/oauth2) for accessing Google APIs with Oauth 2.0 docs).
+* Write a user message
+* Choose personality
+* Press send
+* See:
 
-   - In Google Cloud, go to APIs & Services > Google Auth platform > Clients > Create client > **Web**.
-   - Add your redirect URI: `http://localhost:3000/api/google/callback`.
-   - Copy the client ID. Create and copy a client secret.
+  * Final reply with selected tone
+  * Extracted memory JSON used to generate the reply
 
-2. Enable APIs in the same project:
+---
 
-   - Google Calendar API
-   - Gmail API
+## 2. Important Files (Assignment Highlights)
 
-3. Configure data access scopes in Google Auth Platform to match what you need. This demo uses:
+### Memory Module
 
-   - `openid`
-   - `email`
-   - `profile`
-   - `https://www.googleapis.com/auth/calendar.events`
-   - `https://www.googleapis.com/auth/gmail.modify`
+* `lib/memory.ts`
 
-4. Create `.env.local` (you can copy `.env.example`) at the project root and add:
+  * Defines types: `ChatMessage`, `MemoryItem`, `UserMemory`
+  * Implements `extractMemoryFromMessages(messages)`
+  * Calls OpenRouter via OpenAI SDK
+  * Returns structured memory JSON
 
-   ```bash
-   GOOGLE_CLIENT_ID="your-google-client-id"
-   GOOGLE_CLIENT_SECRET="your-google-client-secret"
-   GOOGLE_REDIRECT_URI="http://localhost:3000/api/google/callback"
-   ```
+* `data/sample-conversation.json`
 
-## Demo flows
+  * A 12-turn student conversation
+  * Used for demo memory extraction
 
-### Try web search + code interpreter
+---
 
-After enabling web search and code interpreter in the UI, ask the model:
+### Personality System
 
-> "Can you fetch the temperatures in SF for August and then generate a chart plotting them?"
+* `lib/personality.ts`
 
-The model should use the web search tool to fetch the temperatures and then use the code interpreter tool to generate a chart which will be displayed in the UI.
+  * Defines personalities
+  * Applies personality rewrite on top of a base reply
+  * Keeps semantic content stable
 
-### Try file search
+---
 
-- Save PDF files, for examples blog posts (you can use [this one](https://openai.com/index/new-tools-and-features-in-the-responses-api/), then print the page and use the "Save as PDF" option)
-- Create a new vector store and upload the PDF file(s)
-- Enable file search and ask the model a question which can be answered by the PDF file(s), for example:
-  > "What's new with the Responses API?"
-- The model should use the file search tool to find the relevant information in the PDF file(s) and then display the response
+### API Routes
 
-### Try the Google integration
+* `app/api/memory/extract/route.ts`
 
-- Click "Connect Google Integration" in the UI and complete the OAuth flow; you will be redirected back with `connected=1`.
-- Ask the assistant to perform tasks—for example, "Show my next five calendar events," or, "Summarize the most recent wirecutter emails".
-- The app will attach Google Calendar and Gmail connectors (via MCP) to the tools list using your access token and stream results back to the UI.
-- To invalidate the OAuth session, clear the app cookies (Chrome DevTools > Application > Storage > Cookies). If you only clear `gc_access_token`, the app will use the `gc_refresh_token` to refresh without re-authenticating.
+  * Loads sample conversation
+  * Returns extracted memory only
 
-## Contributing
+* `app/api/memory_chat/route.ts`
 
-You are welcome to open issues or submit PRs to improve this app, however, please note that we may not review all suggestions.
+  * Accepts `{ messages, personalityId }`
+  * Extracts memory
+  * Builds base reply
+  * Applies personality
+  * Returns structured result
 
-## License
+* `app/api/turn_response/route.ts`
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+  * Simple multi-turn chat using `chat.completions`
+  * No tools or connectors
+
+---
+
+### Frontend Demo Page
+
+* `app/memory-demo/page.tsx`
+
+  * React UI to test:
+
+    * memory extraction
+    * personality rewrite
+  * Displays:
+
+    * Final reply
+    * Memory JSON
+
+---
+
+## 3. Tech Stack
+
+* Next.js 15 (App Router)
+* TypeScript + React
+* OpenAI Node SDK
+* OpenRouter as model provider
+* Tailwind UI (from starter app)
+
+---
+
+## 4. Running Locally
+
+### 4.1 Install dependencies
+
+```bash
+npm install
+```
+
+---
+
+### 4.2 Environment Variables
+
+Create a file:
+
+```
+.env.local
+```
+
+Not committed to git.
+
+Add:
+
+```bash
+OPENAI_API_KEY=sk-or-********************************
+OPENAI_BASE_URL=https://openrouter.ai/api/v1
+```
+
+⚠️ Replace `OPENAI_API_KEY` with your **OpenRouter API key**
+
+⚠️ `.env.local` is already gitignored (safe)
+
+---
+
+### 4.3 Start the app
+
+```bash
+npm run dev
+```
+
+Open in browser:
+
+* Chat UI:
+
+```
+http://localhost:3000
+```
+
+* Memory + Personality Demo:
+
+```
+http://localhost:3000/memory-demo
+```
+
+---
+
+## 5. Based on OpenAI Responses Starter App
+
+This project originally forked from:
+
+```
+openai/openai-responses-starter-app
+```
+
+MIT licensed.
+
+All original features (tools, vector search, Google OAuth, MCP servers) still exist,
+but the **GuppShupp assignment logic lives in:**
+
+* `lib/memory.ts`
+* `lib/personality.ts`
+* `data/sample-conversation.json`
+* `app/api/memory/extract/route.ts`
+* `app/api/memory_chat/route.ts`
+* `app/memory-demo/page.tsx`
+
+---
+
+## 6. License
+
+MIT License
+See the `LICENSE` file.
+
+---
