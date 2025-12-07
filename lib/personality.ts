@@ -3,7 +3,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type { UserMemory } from "./memory";
 
-export type PersonalityId = "neutral" | "calm_mentor" | "witty_friend" | "therapist_style";
+export type PersonalityId =
+  | "neutral"
+  | "calm_mentor"
+  | "witty_friend"
+  | "therapist_style";
 
 export const PERSONALITY_LABELS: Record<PersonalityId, string> = {
   neutral: "Neutral Assistant",
@@ -17,8 +21,9 @@ export function applyPersonalityTone(
   personality: PersonalityId,
   memory?: UserMemory
 ): string {
-  // Later we will make this smarter and pass instructions to the LLM.
-  // For now, just wrap the base reply to prove wiring.
+  // 👇 This line silences ESLint, but does nothing at runtime
+  if (false && memory) console.log(memory);
+
   switch (personality) {
     case "calm_mentor":
       return `👨‍🏫 (Calm mentor tone) ${baseReply}`;
