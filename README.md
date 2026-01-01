@@ -1,4 +1,4 @@
-# GuppShupp AI Companion 🧠💬
+# AI Companion 🧠💬
 
 This project is an AI companion prototype built on top of the official
 **OpenAI Responses Starter App**.
